@@ -62,9 +62,7 @@
 			children = (
 				2642DA5E254AC811005E4EB6 /* AppDelegate.swift */,
 				2642DA62254AC811005E4EB6 /* ViewController.swift */,
-				266ECA79254B965B00D28F9F /* BluetoothManager.swift */,
-				266ECA77254B964000D28F9F /* XXCoreBluetoothManager.h */,
-				266ECA76254B963F00D28F9F /* XXCoreBluetoothManager.m */,
+				26D3B4E225517FAB0052BA66 /* XYBluetoothFramwork */,
 				2642DA64254AC811005E4EB6 /* Main.storyboard */,
 				2642DA67254AC813005E4EB6 /* Assets.xcassets */,
 				2642DA69254AC813005E4EB6 /* LaunchScreen.storyboard */,
@@ -72,6 +70,16 @@
 				2642DA72254AC932005E4EB6 /* XYBluetoothCentralManager-Bridging-Header.h */,
 			);
 			path = XYBluetoothCentralManager;
+			sourceTree = "<group>";
+		};
+		26D3B4E225517FAB0052BA66 /* XYBluetoothFramwork */ = {
+			isa = PBXGroup;
+			children = (
+				266ECA79254B965B00D28F9F /* BluetoothManager.swift */,
+				266ECA77254B964000D28F9F /* XXCoreBluetoothManager.h */,
+				266ECA76254B963F00D28F9F /* XXCoreBluetoothManager.m */,
+			);
+			path = XYBluetoothFramwork;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

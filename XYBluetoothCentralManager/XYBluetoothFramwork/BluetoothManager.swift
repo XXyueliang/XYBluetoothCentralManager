@@ -28,7 +28,7 @@ class BluetoothManager: NSObject, XXCoreBluetoothManagerDelegate {
         XXCoreBluetoothManager.shareInstance()?.delegate = self
     }
     
-    //扫描完已经扫描到的外设会被保存到peripheralArray数组中
+    //扫描完已经扫描到的外设会被保存到peripheralArray数组中,peripheral参数返回的是刚搜到的外设
     func startScan(findPeripheral: @escaping (CBPeripheral) -> Void) {
         XXCoreBluetoothManager.shareInstance()?.startScan({ (peripheral) in
             findPeripheral(peripheral!)

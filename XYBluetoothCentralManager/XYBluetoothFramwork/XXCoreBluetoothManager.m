@@ -7,7 +7,6 @@
 //
 
 #import "XXCoreBluetoothManager.h"
-#import "XYBluetoothCentralManager-Swift.h"
 
 @interface XXCoreBluetoothManager ()<CBCentralManagerDelegate,CBPeripheralDelegate>
 
