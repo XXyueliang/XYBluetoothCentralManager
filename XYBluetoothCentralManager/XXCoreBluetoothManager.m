@@ -7,67 +7,50 @@
 //
 
 #import "XXCoreBluetoothManager.h"
-#import "HuntZero-Swift.h"
+#import "XYBluetoothCentralManager-Swift.h"
 
 @interface XXCoreBluetoothManager ()<CBCentralManagerDelegate,CBPeripheralDelegate>
 
 //扫描回调属性
 @property(nonatomic,copy)void(^scanBlock)(CBPeripheral *);
-
 //连接回调属性
 @property(nonatomic,copy)void(^connectBlock)(BOOL,NSError*);
-
 //发送数据回调
 @property(nonatomic,copy)void(^writeBlock)(BOOL,NSError*);
-
-
 //蓝牙中心属性 CBCentralManager
 @property(nonatomic,strong)CBCentralManager *cbCentralManager;
 
-
-
-
 @end
 
-@implementation XXCoreBluetoothManager
-
-
-
+@implementation XXCoreBluetoothManager{
+    BOOL _isStateUnknown;  //因为每次打开app需要扫描一次，才能确定蓝牙状态
+}
 
 // 单例
 + (instancetype)shareInstance{
     static XXCoreBluetoothManager *manager = nil;
-    
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         manager = [[XXCoreBluetoothManager alloc] init];
-        NSLog(@"赋值");
-//        manager.isConnected = YES;
-        
     });
-    
     return  manager;
 }
 
 
 - (instancetype)init{
     self = [super init];
-    
     //初始化外设数组
     self.scanArr = [NSMutableArray new];
-    [self isBluetoothAvailabel];
-    
+//    [self isBluetoothAvailabel];
     return self;
 }
 
 //创建蓝牙中心,懒加载 initWithDelegate
 //queue:代理所在线程 主线程: dispatch_get_main_queue()
 -(CBCentralManager *)cbCentralManager{
-    
     if (_cbCentralManager == nil) {
         self.cbCentralManager = [[CBCentralManager alloc] initWithDelegate:self queue:dispatch_get_main_queue()];
     }
-    
     return _cbCentralManager;
 }
 
@@ -75,7 +58,6 @@
 
 //获取蓝牙授权状态 isBluetoothAvailabel
 - (BOOL)isBluetoothAvailabel{
-    
     BOOL flag = NO;
     /*
      CBManagerStateUnknown = 0,
@@ -86,9 +68,7 @@
      CBManagerStatePoweredOn,
      */
     switch (self.cbCentralManager.state) {
-            
         case CBManagerStateUnknown:
-            
             NSLog(@"未知状态");
             flag = YES;
             break;
@@ -108,9 +88,7 @@
             NSLog(@"蓝牙可用");
             flag = YES;
             break;
-        
     }
-    
     return  flag;
 }
 
@@ -120,24 +98,34 @@
     //0.判断蓝牙是否可用
     //断言: 第一个参数: 条件表达式
     //第二个参数: 当条件表达式不满足时<程序主动崩溃报错,并且给出提示信息
-    NSAssert([self isBluetoothAvailabel], @"请检查你的蓝牙设置");
+//    NSAssert([self isBluetoothAvailabel], @"请检查你的蓝牙设置");
     
     //1.扫描外设 Services: 扫描指定服务的外设  options: 设置 为nil表示默认设置
 #pragma mark - 第一步 扫描外设 scanForPeripherals
     [self.cbCentralManager scanForPeripheralsWithServices:nil options:nil];
+    if (self.cbCentralManager.state == CBManagerStateUnknown) {
+        _isStateUnknown = YES;
+    }
     
     //保存扫描回调 self.scanBlock =
     self.scanBlock = update;
     
 }
 
+- (void)stopScan {
+    [self.cbCentralManager stopScan];
+}
 
 #pragma mark CBCentralManagerDelegate 蓝牙中心的代理方法
 
 //蓝牙状态更新CBCentrlManager.state
 -(void)centralManagerDidUpdateState:(CBCentralManager *)central{
-    
     NSLog(@"%zd",central.state);
+    [self isBluetoothAvailabel];
+    //如果是打开app后第一次扫描，则需要在确定蓝牙状态是CBManagerStatePoweredOn后再扫描一次
+    if (_isStateUnknown) {
+         [self.cbCentralManager scanForPeripheralsWithServices:nil options:nil];
+    }
 }
 
 #pragma mark - 第二步 发现外设(锁定外设)
@@ -148,18 +136,14 @@
  advertisementData: 外设的广告介绍信息
  RSSI: 外设信号强度  int类型
  */
-//将外设加入数组,并做去重处理
+//外设是不能自己创建的，只能通过扫描得到
 -(void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI{
 //    NSLog(@"扫描到的外设%@",peripheral);
 //    NSLog(@"信号强度%@",RSSI);
 //    NSLog(@"%@",advertisementData);
 //     NSLog(@"扫描到的外设%@",peripheral.name);
-    //调试  testDebug
-    if(  [peripheral.name containsString:@"BBL"] || [peripheral.name containsString:@"SPP"] || [peripheral.name containsString:@"BLE SPS"]){
-
-    }else{
-        return;
-    }
+    
+    //将外设加入数组,并做去重处理
     if (![_scanArr containsObject:peripheral]) {
         //添加到数组
         [_scanArr addObject:peripheral];
@@ -242,8 +226,6 @@
 
     NSLog(@"外设断开");
     self.isConnected = NO;
-//    [self.myTimer invalidate];
-//    self.myTimer = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"peripheralCut" object:nil];
     //在这里可以重连
 }
@@ -253,6 +235,7 @@
 //外设信号强度发生变化
 - (void)peripheralDidUpdateRSSI:(CBPeripheral *)peripheral error:(NSError *)error{
     //NSLog(@"外设信号强度发生变化==%@",peripheral.RSSI);
+    
 }
 
 #pragma mark 第四步 外设发现了服务
@@ -337,11 +320,7 @@
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error{
     NSLog(@"//以通知的形式接收外设的数据");//可以延迟接收最后一条数据
     
-    cameraBlueTooth *blue = [cameraBlueTooth getSharedInstance];
-    blue.isCameraInfo = YES;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-
-         [blue getSystemStatus];
          self.isConnected = YES;
          self.connectBlock(YES, nil);
     });

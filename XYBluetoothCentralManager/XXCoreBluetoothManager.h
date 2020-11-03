@@ -59,6 +59,8 @@
  */
 - (void)startScan: (void(^)(CBPeripheral *))update;
 
+//停止扫描
+- (void)stopScan;
 
 /**
  连接外设
