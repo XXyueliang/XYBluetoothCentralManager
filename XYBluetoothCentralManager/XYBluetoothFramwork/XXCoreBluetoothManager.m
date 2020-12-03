@@ -142,14 +142,21 @@
 //    NSLog(@"%@",advertisementData);
 //     NSLog(@"扫描到的外设%@",peripheral.name);
     
-    //将外设加入数组,并做去重处理
-    if (![_scanArr containsObject:peripheral]) {
-        //添加到数组
-        [_scanArr addObject:peripheral];
-        
-        //执行回调
-        self.scanBlock(peripheral);
+    //去掉原来的，添加最新的
+    if ([_scanArr containsObject:peripheral]) {
+        [_scanArr removeObject:peripheral];
     }
+    [_scanArr addObject:peripheral];
+    self.scanBlock(peripheral);
+    
+//    //将外设加入数组,并做去重处理
+//    if (![_scanArr containsObject:peripheral]) {
+//        //添加到数组
+//        [_scanArr addObject:peripheral];
+//
+//        //执行回调
+//        self.scanBlock(peripheral);
+//    }
     
     
 }
